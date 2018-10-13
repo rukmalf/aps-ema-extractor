@@ -1,0 +1,14 @@
+{
+  "name": "aps-ema-extractor",
+  "version": "1.0.0",
+  "description": "Use APS EMA API to extract information about a Solar PV System",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rukmal Fernando",
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.88.0"
+  }
+}
