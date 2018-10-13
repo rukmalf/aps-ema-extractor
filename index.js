@@ -3,8 +3,8 @@ var request = require('request');
 
 // global variables
 var access_token = '<not set>'
-var username = 'rukmal.f';
-var password = 'rukmal180705';
+var username = '<not set>';
+var password = '<not set>';
 var ecuId = '<not set>';
 var userId = '<not set>';
 
