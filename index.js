@@ -112,10 +112,8 @@ function isLastDayOfMonth(date) {
 		case 2:
 			if(date.getFullYear() % 4 == 0 && date.getDate() == 29)
 				return true;
-			else if(date.getDate() == 28)
-				return true;
-			else
-				return false;
+			else 
+				return (date.getDate() == 28)
 		case 4:
 		case 6:
 		case 9:
