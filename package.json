@@ -9,6 +9,7 @@
   "author": "Rukmal Fernando",
   "license": "ISC",
   "dependencies": {
+    "config": "^2.0.1",
     "request": "^2.88.0"
   }
 }

@@ -1,5 +1,6 @@
 // we use request for the HTTP calls
 var request = require('request');
+var config = require('config');
 
 // global variables
 var access_token = '<not set>'
@@ -7,6 +8,16 @@ var username = '<not set>';
 var password = '<not set>';
 var ecuId = '<not set>';
 var userId = '<not set>';
+
+if(config.has('username')) {
+  username = config.get('username');
+  console.log('Found username: ' + username);
+}
+
+if(config.has('password')) {
+  username = config.get('password');
+  console.log('Found password.');
+}
 
 // Get Access Token
 request.post(
