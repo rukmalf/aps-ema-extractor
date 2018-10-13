@@ -92,10 +92,36 @@ function fetchData() {
 				console.log('error: ' + error);
 				console.log('statusCode: ' + response.statusCode);
 			}
+			
+			if(isLastDayOfMonth(new Date())) {
+				fetchEndOfMonthData();
+			}
+		}
+	);	
+}
+
+function fetchEndOfMonthData() {
+	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${today}&access_token=${access_token}`
+	request.post(
+		monthlyEnergyDetailsUrl,
+		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				var responseObj = JSON.parse(body);
+				var code = responseObj.code;
+				var data = responseObj.data;
+			}
+			else {
+				console.log('error: ' + error);
+				console.log('statusCode: ' + response.statusCode);
+			}
 		}
 	);
 	
-	
+	var today = new Date();
+	if(today.getMonth() == 11) {
+		// today is 31st December, fetch the end of year data too
+	}
 }
 
 function getDateString(date) {
@@ -107,11 +133,11 @@ function getDateString(date) {
 
 function isLastDayOfMonth(date) {
 	// Thirty Days Hath September...
-	var month = date.getMonth() + 1;
+	var month = date.getMonth() + 1; // actual month, not index
 	switch(month) {
 		case 2:
-			if(date.getFullYear() % 4 == 0 && date.getDate() == 29)
-				return true;
+			if((date.getFullYear() % 4) == 0)
+				return (date.getDate() == 29);
 			else 
 				return (date.getDate() == 28)
 		case 4:
@@ -136,6 +162,8 @@ function runTests() {
 	assertIsLastDayOfMonth(new Date(2018, 1, 1, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 1, 27, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 1, 28, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2016, 1, 28, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2016, 1, 29, 0, 0, 0, 0), true);
 	assertIsLastDayOfMonth(new Date(2018, 2, 1, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 2, 30, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 2, 31, 0, 0, 0, 0), true);
