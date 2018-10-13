@@ -11,6 +11,7 @@ var username = '<not set>';
 var password = '<not set>';
 var ecuId = '<not set>';
 var userId = '<not set>';
+var verbose = false;
 
 if(config.has('username')) {
   username = config.get('username');
@@ -28,6 +29,10 @@ if(config.has('runTests')) {
 		runTests();
 		return;
 	}
+}
+
+if(config.has('verbose')) {
+	verbose = config.get('verbose');
 }
 
 // Get Access Token
@@ -87,6 +92,11 @@ function fetchData() {
 				var responseObj = JSON.parse(body);
 				var code = responseObj.code;
 				var data = responseObj.data;
+				
+				if(verbose) {
+					console.log('code: ' + code);
+					console.log(data);
+				}
 			}
 			else {
 				console.log('error: ' + error);
