@@ -2,6 +2,9 @@
 var request = require('request');
 var config = require('config');
 
+// constants
+const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
+
 // global variables
 var access_token = '<not set>'
 var username = '<not set>';
@@ -20,8 +23,9 @@ if(config.has('password')) {
 }
 
 // Get Access Token
+var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
 request.post(
-    'http://api.apsystemsema.com:8073/apsema/v1/users/authorize?appid=yuneng128',
+    accessTokenUrl,
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     function (error, response, body) {
         if (!error && response.statusCode == 200) {
@@ -40,8 +44,9 @@ request.post(
 
 function authenticate() {
 	// Login call
+	var authenticateUrl = `${API_URL}/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${access_token}&devicetype=android`
 	request.post(
-		`http://api.apsystemsema.com:8073/apsema/v1/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${access_token}&devicetype=android`,
+		authenticateUrl,
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
@@ -65,9 +70,9 @@ function authenticate() {
 function fetchData() {
 	// fetch daily summary
 	var today = getDateString(new Date());
-	
+	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${today}&access_token=${access_token}`
 	request.post(
-		`http://api.apsystemsema.com:8073/apsema/v1/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${today}&access_token=${access_token}`,
+		dailyEnergyDetailsUrl,
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
