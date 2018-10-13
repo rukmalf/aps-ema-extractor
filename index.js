@@ -15,7 +15,7 @@ if(config.has('username')) {
 }
 
 if(config.has('password')) {
-  username = config.get('password');
+  password = config.get('password');
   console.log('Found password.');
 }
 
