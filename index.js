@@ -22,6 +22,14 @@ if(config.has('password')) {
   console.log('Found password.');
 }
 
+if(config.has('runTests')) {
+	var shouldRunTests = config.get('runTests');
+	if(shouldRunTests) {
+		runTests();
+		return;
+	}
+}
+
 // Get Access Token
 var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
 request.post(
@@ -77,13 +85,8 @@ function fetchData() {
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
 				var responseObj = JSON.parse(body);
-				console.log('response parsed');
 				var code = responseObj.code;
 				var data = responseObj.data;
-				
-				console.log('Daily Energy');
-				console.log('code: ' + code);
-				console.log('data: ' + data);
 			}
 			else {
 				console.log('error: ' + error);
@@ -91,6 +94,8 @@ function fetchData() {
 			}
 		}
 	);
+	
+	
 }
 
 function getDateString(date) {
@@ -98,4 +103,77 @@ function getDateString(date) {
 	var datePart = date.getDate();
 	var dateStr = date.getFullYear().toString() + (monthPart < 10 ? '0' : '') + monthPart + (datePart < 10 ? '0' : '') + datePart;
 	return dateStr;
+}
+
+function isLastDayOfMonth(date) {
+	// Thirty Days Hath September...
+	var month = date.getMonth() + 1;
+	switch(month) {
+		case 2:
+			if(date.getFullYear() % 4 == 0 && date.getDate() == 29)
+				return true;
+			else if(date.getDate() == 28)
+				return true;
+			else
+				return false;
+		case 4:
+		case 6:
+		case 9:
+		case 11:
+			return (date.getDate() == 30);
+		default:
+			return (date.getDate() == 31);
+	}
+}
+
+function runTests() {
+	console.log('Running tests...');
+	// getDateString() tests
+	
+	// isLastDayOfMonth() tests
+	console.log('Running isLastDayOfMonth() tests...');
+	assertIsLastDayOfMonth(new Date(2018, 0, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 0, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 0, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 1, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 1, 27, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 1, 28, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 2, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 2, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 2, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 3, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 3, 29, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 3, 30, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 4, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 4, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 4, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 5, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 5, 29, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 5, 30, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 6, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 6, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 6, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 7, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 7, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 7, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 8, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 8, 29, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 8, 30, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 9, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 9, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 9, 31, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 10, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 10, 29, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 10, 30, 0, 0, 0, 0), true);
+	assertIsLastDayOfMonth(new Date(2018, 11, 1, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 11, 30, 0, 0, 0, 0), false);
+	assertIsLastDayOfMonth(new Date(2018, 11, 31, 0, 0, 0, 0), true);
+}
+
+function assertIsLastDayOfMonth(date, expected) {
+	var actual = isLastDayOfMonth(date);
+	if(actual != expected) {
+		var message = `Assert failed: expected isLastDayOfMonth(${date.getFullYear()}, ${date.getMonth()}, ${date.getDate()}) to be ${expected} but got ${actual}`;
+		console.log(message);
+	}
 }
