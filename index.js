@@ -4,6 +4,9 @@ var config = require('config');
 
 // constants
 const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
+const LOG_LEVEL_NONE = 0;
+const LOG_LEVEL_ERRORS = 1;
+const LOG_LEVEL_VERBOSE = 2;
 
 // global variables
 var access_token = '<not set>'
@@ -11,7 +14,7 @@ var username = '<not set>';
 var password = '<not set>';
 var ecuId = '<not set>';
 var userId = '<not set>';
-var verbose = false;
+var logLevel = LOG_LEVEL_NONE;
 
 if(config.has('username')) {
   username = config.get('username');
@@ -31,12 +34,14 @@ if(config.has('runTests')) {
 	}
 }
 
-if(config.has('verbose')) {
-	verbose = config.get('verbose');
+if(config.has('logLevel')) {
+	logLevel = config.get('logLevel');
 }
 
 // Get Access Token
 var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
+logVerbose('--> POST ' + accessTokenUrl);
+
 request.post(
     accessTokenUrl,
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
@@ -58,11 +63,14 @@ request.post(
 function authenticate() {
 	// Login call
 	var authenticateUrl = `${API_URL}/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${access_token}&devicetype=android`
+	logVerbose('--> POST ' + authenticateUrl, LOG_LEVEL_VERBOSE);
+
 	request.post(
 		authenticateUrl,
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
+				logVerbose('<-- ' + body, LOG_LEVEL_VERBOSE);
 				var responseObj = JSON.parse(body);
 				var data = JSON.parse(responseObj.data);
 				userId = data.userId;
@@ -84,6 +92,8 @@ function fetchData() {
 	// fetch daily summary
 	var today = getDateString(new Date());
 	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${today}&access_token=${access_token}`
+	logVerbose('--> POST ' + dailyEnergyDetailsUrl, LOG_LEVEL_VERBOSE);
+	
 	request.post(
 		dailyEnergyDetailsUrl,
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
@@ -93,10 +103,14 @@ function fetchData() {
 				var code = responseObj.code;
 				var data = responseObj.data;
 				
-				if(verbose) {
-					console.log('code: ' + code);
-					console.log(data);
+				logVerbose('code: ' + code);
+				if(code == 0) {
+					// System unavailable
+					logError('System unavailable (code = 0)');
 				}
+				
+				logVerbose('data: ' + data);
+				
 			}
 			else {
 				console.log('error: ' + error);
@@ -110,8 +124,26 @@ function fetchData() {
 	);	
 }
 
+function logError(input) {
+	if(logLevel == LOG_LEVEL_NONE) 
+		return;
+		
+	console.log('ERROR: ' + input);
+}
+
+function logVerbose(input) {
+	if(logLevel == LOG_LEVEL_NONE)
+		return;
+
+	if(logLevel == LOG_LEVEL_VERBOSE) {
+		console.log(input);
+	}
+}
+
 function fetchEndOfMonthData() {
 	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${today}&access_token=${access_token}`
+	logVerbose('--> POST ' + monthlyEnergyDetailsUrl, LOG_LEVEL_VERBOSE);
+	
 	request.post(
 		monthlyEnergyDetailsUrl,
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
