@@ -91,6 +91,11 @@ function authenticate() {
 function fetchData() {
 	// fetch daily summary
 	var today = getDateString(new Date());
+	if(config.has('overrideDate')) {
+		today = config.get('overrideDate');
+		logVerbose('Override date with ' + today);
+	}
+		
 	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${today}&access_token=${access_token}`
 	logVerbose('--> POST ' + dailyEnergyDetailsUrl, LOG_LEVEL_VERBOSE);
 	
