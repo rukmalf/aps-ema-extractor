@@ -1,6 +1,7 @@
 // we use request for the HTTP calls
 var request = require('request');
 var config = require('config');
+var fs = require('fs');
 
 // constants
 const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
@@ -121,16 +122,24 @@ function fetchData() {
 					if(outputType === 'csv') {
 						var dataTimes = JSON.parse(data.time);
 						var dataValues = JSON.parse(data.power);
-						
+						var output = '';
+
 						var readingCount = dataTimes.length;
 						logVerbose('found ' + readingCount + ' entries...');
 						console.log('"Time", "Power"');
 						for(var i = 0; i < readingCount; i++) {
-							var outputLine = dataTimes[i] + ', ' + dataValues[i];
-							console.log(outputLine);
+							var outputLine = dataTimes[i] + ', ' + dataValues[i] + '\r\n';
+							output = output + outputLine;
 						}
-						//console.log('times: ' + dataTimes);
-						//console.log('values: ' + dataValues);
+
+						var filename = `output-${today}.csv`;
+						fs.writeFile(filename, output, function(err) {
+							if(err) {
+								console.log(err);
+							}
+
+							logVerbose(readingCount + ' entries written to ' + filename);
+						}); 						
 					}
 				}
 				
