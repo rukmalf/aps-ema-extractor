@@ -116,6 +116,24 @@ function fetchData() {
 				
 				logVerbose('data: ' + data);
 				
+				if(data && config.has('output')) {
+					var outputType = config.get('output');
+					if(outputType === 'csv') {
+						var dataTimes = JSON.parse(data.time);
+						var dataValues = JSON.parse(data.power);
+						
+						var readingCount = dataTimes.length;
+						logVerbose('found ' + readingCount + ' entries...');
+						console.log('"Time", "Power"');
+						for(var i = 0; i < readingCount; i++) {
+							var outputLine = dataTimes[i] + ', ' + dataValues[i];
+							console.log(outputLine);
+						}
+						//console.log('times: ' + dataTimes);
+						//console.log('values: ' + dataValues);
+					}
+				}
+				
 			}
 			else {
 				console.log('error: ' + error);
