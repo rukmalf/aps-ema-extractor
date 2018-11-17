@@ -281,6 +281,7 @@ function runTests() {
 	assertIsLastDayOfMonth(new Date(2018, 11, 1, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 11, 30, 0, 0, 0, 0), false);
 	assertIsLastDayOfMonth(new Date(2018, 11, 31, 0, 0, 0, 0), true);
+	console.log('Completed all isLastDayOfMonth() tests.');
 }
 
 function assertIsLastDayOfMonth(date, expected) {
