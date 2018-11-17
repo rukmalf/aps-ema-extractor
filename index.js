@@ -39,27 +39,32 @@ if(config.has('logLevel')) {
 	logLevel = config.get('logLevel');
 }
 
-// Get Access Token
-var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
-logVerbose('--> POST ' + accessTokenUrl);
+// authentication chains into the other calls to fetch data
+authenticateAndFetchData();
 
-request.post(
-    accessTokenUrl,
-    { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
-    function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-			access_token = JSON.parse(body).access_token;
-			console.log('Access token: ' + access_token);
-			
-			// force other calls to be synchronus
-			authenticate();
-        }
-		else {
-			console.log('error: ' + error);
-			console.log('statusCode: ' + response.statusCode);
+function authenticateAndFetchData() {
+	// Get Access Token
+	var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
+	logVerbose('--> POST ' + accessTokenUrl);
+
+	request.post(
+		accessTokenUrl,
+		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				access_token = JSON.parse(body).access_token;
+				console.log('Access token: ' + access_token);
+				
+				// force other calls to be synchronus
+				authenticate();
+			}
+			else {
+				console.log('error: ' + error);
+				console.log('statusCode: ' + response.statusCode);
+			}
 		}
-    }
-);
+	);
+}
 
 function authenticate() {
 	// Login call
