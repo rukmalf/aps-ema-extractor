@@ -161,22 +161,6 @@ function fetchData() {
 	);	
 }
 
-function logError(input) {
-	if(logLevel == LOG_LEVEL_NONE) 
-		return;
-		
-	console.log('ERROR: ' + input);
-}
-
-function logVerbose(input) {
-	if(logLevel == LOG_LEVEL_NONE)
-		return;
-
-	if(logLevel == LOG_LEVEL_VERBOSE) {
-		console.log(input);
-	}
-}
-
 function fetchEndOfMonthData() {
 	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${today}&access_token=${access_token}`
 	logVerbose('--> POST ' + monthlyEnergyDetailsUrl, LOG_LEVEL_VERBOSE);
@@ -203,6 +187,27 @@ function fetchEndOfMonthData() {
 	}
 }
 
+// REGION: Logging
+
+function logError(input) {
+	if(logLevel == LOG_LEVEL_NONE) 
+		return;
+		
+	console.log('ERROR: ' + input);
+}
+
+function logVerbose(input) {
+	if(logLevel == LOG_LEVEL_NONE)
+		return;
+
+	if(logLevel == LOG_LEVEL_VERBOSE) {
+		console.log(input);
+	}
+}
+
+// ENDREGION: Logging
+
+// REGION: Date time handling
 function getDateString(date) {
 	var monthPart = date.getMonth() + 1;
 	var datePart = date.getDate();
@@ -229,6 +234,9 @@ function isLastDayOfMonth(date) {
 	}
 }
 
+// ENDREGION: Date time handling
+
+// REGION: Tests
 function runTests() {
 	console.log('Running tests...');
 	// getDateString() tests
@@ -282,3 +290,5 @@ function assertIsLastDayOfMonth(date, expected) {
 		console.log(message);
 	}
 }
+
+// ENDREGION: Tests
