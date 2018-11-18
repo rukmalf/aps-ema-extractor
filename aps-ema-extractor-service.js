@@ -1,5 +1,4 @@
 var request = require('request');
-var fs = require('fs');
 var dateutil = require('./date-util');
 var logger = require('./logger');
 
@@ -12,14 +11,17 @@ var ecuId = '<not set>';
 var userId = '<not set>';
 var username = '<not set>';
 var password = '<not set>';
+var date = '<not set>';
+var output = '';
 
-function initialize(usernameVal, passwordVal, logLevelVal) {
+function initialize(usernameVal, passwordVal, dateVal, logLevelVal) {
 	username = usernameVal;
 	password = passwordVal;
+	date = dateVal;
 	logLevel = logLevelVal;
 }
 
-function authenticateAndFetchData() {
+function authenticateAndFetchData(processor) {
 	// Get Access Token
 	var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
 	logger.logVerbose('--> POST ' + accessTokenUrl);
@@ -33,7 +35,7 @@ function authenticateAndFetchData() {
 				console.log('Access token: ' + access_token);
 				
 				// force other calls to be synchronus
-				authenticate();
+				authenticate(processor);
 			}
 			else {
 				console.log('error: ' + error);
@@ -43,7 +45,7 @@ function authenticateAndFetchData() {
 	);
 }
 
-function authenticate() {
+function authenticate(processor) {
 	// Login call
 	var authenticateUrl = `${API_URL}/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${access_token}&devicetype=android`
 	logger.logVerbose('--> POST ' + authenticateUrl);
@@ -61,7 +63,7 @@ function authenticate() {
 				ecuId = JSON.parse(data.ecuId)[userId];
 				console.log('ECU ID: ' + ecuId);
 				
-				fetchData();
+				fetchData(date, processor);
 			}
 			else {
 				console.log('error: ' + error);
@@ -71,15 +73,9 @@ function authenticate() {
 	);
 }
 
-function fetchData() {
-	// fetch daily summary
-	var today = getDateString(new Date());
-	if(config.has('overrideDate')) {
-		today = config.get('overrideDate');
-		logger.logVerbose('Override date with ' + today);
-	}
-		
-	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${today}&access_token=${access_token}`
+function fetchData(date, processor) {
+	// fetch daily summary		
+	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${date}&access_token=${access_token}`
 	logger.logVerbose('--> POST ' + dailyEnergyDetailsUrl);
 	
 	request.post(
@@ -95,51 +91,34 @@ function fetchData() {
 				if(code == 0) {
 					// System unavailable
 					logError('System unavailable (code = 0)');
-				}
+				}				
 				
-				logger.logVerbose('data: ' + data);
-				
-				if(data && config.has('output')) {
-					var outputType = config.get('output');
-					if(outputType === 'csv') {
-						var dataTimes = JSON.parse(data.time);
-						var dataValues = JSON.parse(data.power);
-						var output = '';
-
-						var readingCount = dataTimes.length;
-						logger.logVerbose('found ' + readingCount + ' entries...');
-						console.log('"Time", "Power"');
-						for(var i = 0; i < readingCount; i++) {
-							var outputLine = dataTimes[i] + ', ' + dataValues[i] + '\r\n';
-							output = output + outputLine;
-						}
-
-						var filename = `output-${today}.csv`;
-						fs.writeFile(filename, output, function(err) {
-							if(err) {
-								console.log(err);
-							}
-
-							logger.logVerbose(readingCount + ' entries written to ' + filename);
-						}); 						
+				// did we get a response?
+				if(data) {
+					logger.logVerbose('data: ' + data);
+					
+					// do we have a processor function - e.g.: to output data to CSV?
+					if(processor)  {
+						logger.logVerbose('Processing data...');
+						processor(data);
 					}
-				}
-				
+				}				
 			}
 			else {
 				console.log('error: ' + error);
 				console.log('statusCode: ' + response.statusCode);
 			}
 			
-			if(dateutil.isLastDayOfMonth(new Date())) {
-				fetchEndOfMonthData();
+			var today = new Date();
+			if(dateutil.isLastDayOfMonth(today)) {
+				fetchEndOfMonthData(today);
 			}
 		}
 	);	
 }
 
-function fetchEndOfMonthData() {
-	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${today}&access_token=${access_token}`
+function fetchEndOfMonthData(date) {
+	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${date}&access_token=${access_token}`
 	logger.logVerbose('--> POST ' + monthlyEnergyDetailsUrl);
 	
 	request.post(
