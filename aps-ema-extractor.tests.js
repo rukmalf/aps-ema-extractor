@@ -1,4 +1,3 @@
-// REGION: Tests
 var dateutil = require('./date-util');
 
 function runTests() {
@@ -59,5 +58,3 @@ function assertIsLastDayOfMonth(date, expected) {
 module.exports = {
 	runTests: runTests
 }
-
-// ENDREGION: Tests
