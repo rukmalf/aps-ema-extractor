@@ -83,6 +83,8 @@ function fetchData(date, processor) {
 		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
 		function (error, response, body) {
 			if (!error && response.statusCode == 200) {
+				logger.logVerbose("<-- " + body);
+				
 				var responseObj = JSON.parse(body);
 				var code = responseObj.code;
 				var data = responseObj.data;
@@ -145,5 +147,6 @@ function fetchEndOfMonthData(date) {
 
 module.exports = {
 	authenticateAndFetchData: authenticateAndFetchData,
-	initialize: initialize
+	initialize: initialize,
+	fetchData: fetchData
 }
