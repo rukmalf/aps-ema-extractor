@@ -27,9 +27,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token', async (req, res) => {
 	let date = req.params.date;
 	let token = req.params.token;
 	
-	if(date == 'today') {
-		date = dateUtil.getDateString(new Date());
-	}
+	date = preprocessDate(date);
 	
 	let dailyEnergyDetailsCSV = handleDailyEnergyDetails(ecuId, date, token);
 	
@@ -45,12 +43,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	let webhook = req.params.webhook;
 	let iftttKey = req.params.iftttkey;
 	
-	if(date == 'today') {
-		date = dateUtil.getToday();
-	}
-	else if(date == 'yesterday') {
-		date = dateUtil.getYesterday();
-	}
+	date = preprocessDate(date);
 	
 	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
 	
@@ -77,6 +70,17 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 	let dailyEnergyDetailsCSV = util.dataProcessorOutputCSV(dailyEnergyDetails.data);
 	
 	return dailyEnergyDetailsCSV;
+}
+
+function preprocessDate(date) {
+	if(date == 'today') {
+		date = dateUtil.getToday();
+	}
+	else if(date == 'yesterday') {
+		date = dateUtil.getYesterday();
+	}
+	
+	return date;
 }
 
 function postSummary(callbackUrl, callbackBody) {

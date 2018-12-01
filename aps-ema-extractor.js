@@ -41,7 +41,7 @@ if(config.has('password')) {
   logger.logVerbose('Found password.');
 }
 
-var date = dateutil.getDateString(new Date());
+var date = dateutil.getToday();
 if(config.has('overrideDate')) {
 	date = config.get('overrideDate');
 	logger.logVerbose('Override date with ' + date);
