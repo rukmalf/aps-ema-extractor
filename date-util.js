@@ -5,6 +5,16 @@ function getDateString(date) {
 	return dateStr;
 }
 
+function getToday() {
+	return getDateString(new Date());
+}
+
+function getYesterday() {
+	let date = new Date();
+	date.setDate(date.getDate() - 1);
+	return getDateString(date);
+}
+
 function isLastDayOfMonth(date) {
 	// Thirty Days Hath September...
 	var month = date.getMonth() + 1; // actual month, not index
@@ -26,5 +36,7 @@ function isLastDayOfMonth(date) {
 
 module.exports = {
 	getDateString: getDateString,
+	getToday: getToday,
+	getYesterday: getYesterday,
 	isLastDayOfMonth: isLastDayOfMonth
 }

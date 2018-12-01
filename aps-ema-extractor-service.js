@@ -4,8 +4,8 @@ var logger = require('./logger');
 var config = require('config');
 
 // constants
-const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
-//const API_URL = 'http://demo1881045.mockable.io';
+//const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
+const API_URL = 'http://demo1881045.mockable.io';
 const options = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 45000 };
 
 if(config.has('logLevel')) {
