@@ -8,13 +8,13 @@ var service = require('./aps-ema-extractor-service');
 
 // constants
 const LOG_LEVEL_NONE = 0;
-const LOG_LEVEL_ERRORS = 1;
+const LOG_LEVEL_ERROR = 1;
 const LOG_LEVEL_VERBOSE = 2;
 
 // global variables
 var username = '<not set>';
 var password = '<not set>';
-var logLevel = LOG_LEVEL_NONE;
+var logLevel = LOG_LEVEL_ERROR;
 
 // check if test mode
 if(config.has('runTests')) {
@@ -47,8 +47,21 @@ if(config.has('overrideDate')) {
 	logger.logVerbose('Override date with ' + date);
 }
 
-// authentication chains into the other calls to fetch data
-service.initialize(username, password, date, logLevel);
-service.authenticateAndFetchData(util.dataProcessorOutputCSVFile);
+var outputCsv = false;
+if(config.has('output')) {
+	outputCsv = config.get('output');
+}
+
+// call the service to authenticate and fetch data
+var response = service.authenticateAndFetchData(username, password, date, util.dataProcessorOutputCSV);
+response.then(function(result) {
+	logger.logVerbose('Response resolved: ' + result);
+},
+function(error) {
+	logger.logError('Error: ' + error);
+});
+logger.logVerbose('Promise obtained');
+
+
 
 

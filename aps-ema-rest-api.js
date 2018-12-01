@@ -1,26 +1,32 @@
 var api = require('./aps-ema-extractor-service');
 var util = require('./util');
+var dateUtil = require('./date-util');
 const service = require('restana')({});
 
-service.get('/v1/users/:username/ecu/:ecuId/dailyEnergyDetails/:date', async(req, res) => {
-	console.log('responding to request...');
-	
-	// call the service and return result
-	var username = req.params.username;
+// 01 - access token
+// TODO: service.get('/v1/AccessToken/app/:appId');
+
+// 02 - authenticate
+// TODO: service.get('/v1/users/:username/:accessToken/:password');
+// OR service.get('/v1/users/:username/:accessToken/') with password in body or header
+
+// 03 - daily energy details
+// Endpoint: service.get('/v1/ecu/:ecuId/daily-details/:date/:token')
+service.get('/v1/ecu/:ecuId/daily-details/:date/:token', async (req, res) => {
 	var ecuId = req.params.ecuId;
 	var date = req.params.date;
-	
-	if(date === 'today') {
-		// generate date string for today
+	var token = req.params.token;
+	if(date == 'today') {
+		date = dateUtil.getDateString(new Date());
 	}
+
+	// call API method to fetch details
+    var dailyEnergyDetails = await api.getDailyEnergyDetails(ecuId, date, token);
 	
-	console.log('Params: username ' + username + ', ECU ID = ' + ecuId + ', date = ' + date);
-	
-	api.initialize(username, '', date, 2);
-	var csvContent = api.fetchData(date, util.dataProcessorOutputCSV);
-	
-	// res.send('ECHO username ' + username + ', ECU ID = ' + ecuId + ', date = ' + date);
-	res.send(csvContent);
+	// convert JSON data to CSV format so that we can easily plot with a spreadsheet
+	var dailyEnergyDetailsCSV = util.dataProcessorOutputCSV(dailyEnergyDetails.data);
+    
+	res.send(dailyEnergyDetailsCSV);
 });
 
 service.start(3000).then((server) => { console.log('Listening on :3000...'); });

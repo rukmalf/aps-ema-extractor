@@ -1,122 +1,111 @@
 var request = require('request');
 var dateutil = require('./date-util');
 var logger = require('./logger');
+var config = require('config');
 
 // constants
 const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
+//const API_URL = 'http://demo1881045.mockable.io';
+const options = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 45000 };
 
-// global variables
-var access_token = '<not set>'
-var ecuId = '<not set>';
-var userId = '<not set>';
-var username = '<not set>';
-var password = '<not set>';
-var date = '<not set>';
-var output = '';
-
-function initialize(usernameVal, passwordVal, dateVal, logLevelVal) {
-	username = usernameVal;
-	password = passwordVal;
-	date = dateVal;
-	logLevel = logLevelVal;
+if(config.has('logLevel')) {
+	logLevel = config.get('logLevel');
+	logger.init(logLevel);
 }
 
-function authenticateAndFetchData(processor) {
-	// Get Access Token
-	var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
-	logger.logVerbose('--> POST ' + accessTokenUrl);
-
-	request.post(
-		accessTokenUrl,
-		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
-		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				access_token = JSON.parse(body).access_token;
-				console.log('Access token: ' + access_token);
-				
-				// force other calls to be synchronus
-				authenticate(processor);
+function postSync(url, headers) {
+	return new Promise((resolve, reject) => {
+		logger.logVerbose('==> POST ' + url);
+		
+		request.post(url, headers, (error, response, body) => {
+			if(error) {
+				console.log('Rejecting promise due to error: ' + error);
+				reject(error);
 			}
-			else {
-				console.log('error: ' + error);
-				console.log('statusCode: ' + response.statusCode);
-			}
-		}
-	);
-}
-
-function authenticate(processor) {
-	// Login call
-	var authenticateUrl = `${API_URL}/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${access_token}&devicetype=android`
-	logger.logVerbose('--> POST ' + authenticateUrl);
-
-	request.post(
-		authenticateUrl,
-		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
-		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				logger.logVerbose('<-- ' + body);
-				var responseObj = JSON.parse(body);
-				var data = JSON.parse(responseObj.data);
-				userId = data.userId;
-				console.log('User ID: ' + userId);
-				ecuId = JSON.parse(data.ecuId)[userId];
-				console.log('ECU ID: ' + ecuId);
-				
-				fetchData(date, processor);
-			}
-			else {
-				console.log('error: ' + error);
-				console.log('statusCode: ' + response.statusCode);
-			}
-		}
-	);
-}
-
-function fetchData(date, processor) {
-	// fetch daily summary		
-	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${date}&access_token=${access_token}`
-	logger.logVerbose('--> POST ' + dailyEnergyDetailsUrl);
-	
-	request.post(
-		dailyEnergyDetailsUrl,
-		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
-		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				logger.logVerbose("<-- " + body);
-				
-				var responseObj = JSON.parse(body);
-				var code = responseObj.code;
-				var data = responseObj.data;
-				
-				logger.logVerbose('code: ' + code);
-				if(code == 0) {
-					// System unavailable
-					logError('System unavailable (code = 0)');
-				}				
-				
-				// did we get a response?
-				if(data) {
-					logger.logVerbose('data: ' + data);
-					
-					// do we have a processor function - e.g.: to output data to CSV?
-					if(processor)  {
-						logger.logVerbose('Processing data...');
-						processor(data);
-					}
-				}				
-			}
-			else {
-				console.log('error: ' + error);
-				console.log('statusCode: ' + response.statusCode);
+			if(response.statusCode != 200) {
+				console.log('Rejecting promise due to invalid status code: ' + response.statusCode);
+				reject('Invalid status code <' + response.statusCode + '>');
 			}
 			
-			var today = new Date();
-			if(dateutil.isLastDayOfMonth(today)) {
-				fetchEndOfMonthData(today);
-			}
+			console.log('<== ' + body);
+			resolve(body);
+		});
+	});
+}
+
+// 01 - Access token
+async function getAccessToken() {
+	// Get Access Token
+	var accessTokenUrl = `${API_URL}/users/authorize?appid=yuneng128`;
+	let accessTokenResponse = await postSync(accessTokenUrl, options);
+	
+	let access_token = JSON.parse(accessTokenResponse).access_token;
+	console.log('Access token: ' + access_token);
+	
+	return access_token;
+}
+
+// 02 - Authentication, user details and ECU details
+async function getUserDetails(username, password, accessToken) {
+	var authenticateUrl = `${API_URL}/users/loginAndGetViewList?username=${username}&password=${password}&access_token=${accessToken}&devicetype=android`
+	let authenticateResponse = await postSync(authenticateUrl, options);
+	
+	var authenticateDetails = JSON.parse(authenticateResponse);
+	var data = JSON.parse(authenticateDetails.data);
+	userId = data.userId;
+	console.log('User ID: ' + userId);
+	var ecuId = JSON.parse(data.ecuId)[userId];
+	console.log('ECU ID: ' + ecuId);
+	
+	var userDetails = {};
+	userDetails.userId = userId;
+	userDetails.ecuId = ecuId;
+	
+	return userDetails;
+}
+
+// 03 - Daily energy details
+async function getDailyEnergyDetails(ecuId, date, access_token) {
+	var dailyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=power&date=${date}&access_token=${access_token}`
+	let fetchDataResponse = await postSync(dailyEnergyDetailsUrl, options);
+	
+	var dailyEnergyDetails = JSON.parse(fetchDataResponse);
+	
+	return dailyEnergyDetails;
+}
+
+// 04 - A single synchronous method to get access token, authenticate and get daily details
+async function authenticateAndFetchData(username, password, date, processor) {
+	
+	// call 1 - get access token
+	let access_token = await getAccessToken();
+	logger.logVerbose('Access Token: ' + access_token);
+	
+	// call 2 - get user details including ECU ID
+	var userDetails = await getUserDetails(username, password, access_token);
+	
+	// call 3 - get daily details
+	var energyDetails = await getDailyEnergyDetails(userDetails.ecuId, date, access_token);
+	
+	logger.logVerbose('code: ' + energyDetails.code);
+	if(energyDetails.code == 0) {
+		// System unavailable
+		logger.logError('System unavailable (code = 0)');
+	}				
+	
+	// did we get a response?
+	if(energyDetails.data) {		
+		// do we have a processor function - e.g.: to output data to CSV?
+		if(processor)  {
+			logger.logVerbose('Processing data...');
+			var energyDetailsProcessed = processor(energyDetails.data);
+			return energyDetailsProcessed;
 		}
-	);	
+		
+		return energyDetails;
+	}
+	
+	return;
 }
 
 function fetchEndOfMonthData(date) {
@@ -146,7 +135,8 @@ function fetchEndOfMonthData(date) {
 }
 
 module.exports = {
-	authenticateAndFetchData: authenticateAndFetchData,
-	initialize: initialize,
-	fetchData: fetchData
+	getAccessToken: getAccessToken,
+	getUserDetails: getUserDetails,
+	getDailyEnergyDetails: getDailyEnergyDetails,
+	authenticateAndFetchData: authenticateAndFetchData
 }
