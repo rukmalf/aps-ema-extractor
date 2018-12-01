@@ -1,22 +1,22 @@
-var fs = require('fs');
-var logger = require('./logger');
-var config = require('config');
+const fs = require('fs');
+const logger = require('./logger');
+const config = require('config');
 
 // when the daily data is fetched, we can process it with this function
 function dataProcessorOutputCSV(data, fnOutput) {
 	if(data && config && config.has('output')) {
-		var outputType = config.get('output');
+		let outputType = config.get('output');
 		if(outputType === 'csv') {
-			var dataTimes = JSON.parse(data.time);
-			var dataValues = JSON.parse(data.power);
-			var output = '';
+			let dataTimes = JSON.parse(data.time);
+			let dataValues = JSON.parse(data.power);
+			let output = '';
 
-			var readingCount = dataTimes.length;
+			let readingCount = dataTimes.length;
 			logger.logVerbose('found ' + readingCount + ' entries...');
 
 			output = '"Time","Power"\r\n';
-			for(var i = 0; i < readingCount; i++) {
-				var outputLine = '"' + dataTimes[i] + '",' + dataValues[i] + '\r\n';
+			for(let i = 0; i < readingCount; i++) {
+				let outputLine = '"' + dataTimes[i] + '",' + dataValues[i] + '\r\n';
 				output = output + outputLine;
 			}
 			
@@ -26,25 +26,46 @@ function dataProcessorOutputCSV(data, fnOutput) {
 }
 
 function dataProcessorOutputCSV(data, fnOutput) {
-	var dataTimes = JSON.parse(data.time);
-	var dataValues = JSON.parse(data.power);
-	var output = '';
+	let dataTimes = JSON.parse(data.time);
+	let dataValues = JSON.parse(data.power);
+	let output = '';
 
-	var readingCount = dataTimes.length;
+	let readingCount = dataTimes.length;
 	logger.logVerbose('found ' + readingCount + ' entries...');
 
 	output = '"Time","Power"\r\n';
-	for(var i = 0; i < readingCount; i++) {
-		var outputLine = '"' + dataTimes[i] + '",' + dataValues[i] + '\r\n';
+	for(let i = 0; i < readingCount; i++) {
+		let outputLine = '"' + dataTimes[i] + '",' + dataValues[i] + '\r\n';
 		output = output + outputLine;
 	}
 	
 	return output; 
 }
 
+function dataProcessorOutputHTMLTable(data, fnOutput) {
+	let dataTimes = JSON.parse(data.time);
+	let dataValues = JSON.parse(data.power);
+	let output = '';
+
+	let readingCount = dataTimes.length;
+	logger.logVerbose('found ' + readingCount + ' entries...');
+
+	output = '<table border="1"><tr><th>Time</th><th>Power</th></tr>';
+	for(let i = 0; i < readingCount; i++) {
+		let outputLine = '<tr><td>' + dataTimes[i] + '</td><td>' + dataValues[i] + '</td></tr>';
+		output = output + outputLine;
+	}
+	output = output + '</table>';
+	
+	console.log('HTML');
+	console.log(output);
+	
+	return output; 
+}
+
 function dataProcessorOutputCSVFile(data) {
-	var content = dataProcessorOutputToCSV(data);
-	var filename = `output-${date}.csv`;			
+	let content = dataProcessorOutputToCSV(data);
+	let filename = `output-${date}.csv`;			
 	
 	fs.writeFile(filename, content, function(err) {
 		if(err) {
@@ -56,6 +77,7 @@ function dataProcessorOutputCSVFile(data) {
 }
 
 module.exports = {
+	dataProcessorOutputHTMLTable: dataProcessorOutputHTMLTable,
 	dataProcessorOutputCSV: dataProcessorOutputCSV,
 	dataProcessorOutputCSVFile: dataProcessorOutputCSVFile
 }

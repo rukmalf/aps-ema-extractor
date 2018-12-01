@@ -48,7 +48,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
 	
 	// post response to webhook
-	//let webhookUrl = 'https://ift.tt/' + webhook;
+	// let webhookUrl = 'https://ift.tt/' + webhook;
 	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
 	let webhookUrl = `https://maker.ifttt.com/trigger/${webhook}/with/key/${iftttKey}`;
 	let webhookBody = {
@@ -67,7 +67,7 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
     let dailyEnergyDetails = await api.getDailyEnergyDetails(ecuId, date, token);
 	
 	// convert JSON data to CSV format so that we can easily plot with a spreadsheet
-	let dailyEnergyDetailsCSV = util.dataProcessorOutputCSV(dailyEnergyDetails.data);
+	let dailyEnergyDetailsCSV = util.dataProcessorOutputHTMLTable(dailyEnergyDetails.data);
 	
 	return dailyEnergyDetailsCSV;
 }
