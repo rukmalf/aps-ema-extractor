@@ -103,4 +103,5 @@ function postSummary(callbackUrl, callbackBody) {
 	
 }
 
-service.start(3000).then((server) => { console.log('Listening on :3000...'); });
+var port = process.env.PORT || 8080;
+service.start(port).then((server) => { console.log(`Listening on :${port}...`); });
