@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "config": "^2.0.1",
-    "fastify": "^1.13.1",
     "fs": "0.0.1-security",
     "request": "^2.88.0",
     "restana": "^2.3.3"
