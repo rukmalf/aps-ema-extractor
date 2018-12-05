@@ -29,7 +29,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token', async (req, res) => {
 	
 	date = preprocessDate(date);
 	
-	let dailyEnergyDetailsCSV = handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
 	
 	res.send(dailyEnergyDetailsCSV);
 });
@@ -68,6 +68,9 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 	
 	// convert JSON data to CSV format so that we can easily plot with a spreadsheet
 	let dailyEnergyDetailsCSV = util.dataProcessorOutputHTMLTable(dailyEnergyDetails.data);
+	
+	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
+	console.log('Daily power: ' + dailyPower);
 	
 	return dailyEnergyDetailsCSV;
 }

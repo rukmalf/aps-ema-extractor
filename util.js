@@ -63,6 +63,16 @@ function dataProcessorOutputHTMLTable(data, fnOutput) {
 	return output; 
 }
 
+function dataProcessorOutputDailyTotal(data) {
+	let dailyPower = JSON.parse(data.power);
+	if(dailyPower) {
+		let dailyTotalEst = dailyPower.map((value, index, array) => parseInt(value, 10)).reduce((total, amount) => total + amount);
+		if(dailyTotalEst) return Math.round(dailyTotalEst * (5 / 60000));
+	}
+
+	return -1;
+}
+
 function dataProcessorOutputCSVFile(data) {
 	let content = dataProcessorOutputToCSV(data);
 	let filename = `output-${date}.csv`;			
@@ -79,5 +89,6 @@ function dataProcessorOutputCSVFile(data) {
 module.exports = {
 	dataProcessorOutputHTMLTable: dataProcessorOutputHTMLTable,
 	dataProcessorOutputCSV: dataProcessorOutputCSV,
-	dataProcessorOutputCSVFile: dataProcessorOutputCSVFile
+	dataProcessorOutputCSVFile: dataProcessorOutputCSVFile,
+	dataProcessorOutputDailyTotal: dataProcessorOutputDailyTotal
 }
