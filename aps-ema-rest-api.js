@@ -47,8 +47,8 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	
 	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
 	
-	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
-	console.log('Daily power: ' + dailyPower);
+	//let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
+	//console.log('Daily power: ' + dailyPower);
 	
 	// post response to webhook
 	// let webhookUrl = 'https://ift.tt/' + webhook;
@@ -56,7 +56,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	let webhookUrl = `https://maker.ifttt.com/trigger/${webhook}/with/key/${iftttKey}`;
 	let webhookBody = {
 		value1: date,
-		value2: dailyPower,
+		value2: 42,
 		value3: dailyEnergyDetailsCSV
 	};
 
