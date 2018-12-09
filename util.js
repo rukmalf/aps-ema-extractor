@@ -63,6 +63,18 @@ function dataProcessorOutputHTMLTable(data, fnOutput) {
 	return output; 
 }
 
+function dataProcessorOutputHTMLTableForSummary(dates, energy) {
+	let output = '<table border="1"><tr><th>Date</th><th>Power (KWh)</th></tr>';
+	
+	for(let i = 0; i < dates.length; i++) {
+		let outputLine = '<tr><td>' + dates[i] + '</td><td>' + energy[i] + '</td></tr>';
+		output = output + outputLine;
+	}
+	output = output + '</table>';
+	
+	return output;
+}
+
 function dataProcessorOutputDailyTotal(data) {
 	let dailyPower = JSON.parse(data.power);
 	if(dailyPower) {
@@ -90,5 +102,6 @@ module.exports = {
 	dataProcessorOutputHTMLTable: dataProcessorOutputHTMLTable,
 	dataProcessorOutputCSV: dataProcessorOutputCSV,
 	dataProcessorOutputCSVFile: dataProcessorOutputCSVFile,
-	dataProcessorOutputDailyTotal: dataProcessorOutputDailyTotal
+	dataProcessorOutputDailyTotal: dataProcessorOutputDailyTotal,
+	dataProcessorOutputHTMLTableForSummary: dataProcessorOutputHTMLTableForSummary
 }

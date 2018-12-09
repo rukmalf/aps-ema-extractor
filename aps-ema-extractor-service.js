@@ -108,35 +108,19 @@ async function authenticateAndFetchData(username, password, date, processor) {
 	return;
 }
 
-function fetchEndOfMonthData(date) {
+// 05 - Monthly energy summary
+async function fetchEndOfMonthData(ecuId, date, access_token) {
 	var monthlyEnergyDetailsUrl = `${API_URL}/ecu/getPowerInfo?ecuId=${ecuId}&filter=day_of_month&date=${date}&access_token=${access_token}`
-	logger.logVerbose('--> POST ' + monthlyEnergyDetailsUrl);
 	
-	request.post(
-		monthlyEnergyDetailsUrl,
-		{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
-		function (error, response, body) {
-			if (!error && response.statusCode == 200) {
-				var responseObj = JSON.parse(body);
-				var code = responseObj.code;
-				var data = responseObj.data;
-			}
-			else {
-				console.log('error: ' + error);
-				console.log('statusCode: ' + response.statusCode);
-			}
-		}
-	);
+	let monthlyEnergyResponse = await postSync(monthlyEnergyDetailsUrl, options);
 	
-	var today = new Date();
-	if(today.getMonth() == 11) {
-		// today is 31st December, fetch the end of year data too
-	}
+	return monthlyEnergyResponse;
 }
 
 module.exports = {
 	getAccessToken: getAccessToken,
 	getUserDetails: getUserDetails,
 	getDailyEnergyDetails: getDailyEnergyDetails,
-	authenticateAndFetchData: authenticateAndFetchData
+	authenticateAndFetchData: authenticateAndFetchData,
+	fetchEndOfMonthData: fetchEndOfMonthData
 }

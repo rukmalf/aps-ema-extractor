@@ -1,4 +1,5 @@
 const service = require('restana')({});
+const bodyParser = require('body-parser');
 const request = require('request');
 const querystring = require('querystring');
 const config = require('config');
@@ -6,6 +7,8 @@ const api = require('./aps-ema-extractor-service');
 const util = require('./util');
 const dateUtil = require('./date-util');
 const logger = require('./logger');
+
+service.use(bodyParser.json());
 
 let logLevel = logger.logError;
 if(config.has('logLevel')) {
@@ -65,6 +68,61 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	res.send(dailyEnergyDetailsCSV);
 });
 
+// 04 - weekly/month energy details with callback to IFTTT
+// Endpoint: service.get('/v1/ecu/:ecuId/summary/:period/:endDate');
+service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
+	// read params from URL
+	let ecuId = req.params.ecuId;
+	let period = req.params.period;
+	let endDate = req.params.endDate;
+	
+	endDate = preprocessDate(endDate);
+	
+	// read token and callback info from body
+	let body = req.body;
+	let token = body.token;
+	let callbackTarget = body.callback;
+	
+	let iftttEvent = '';
+	let iftttKey = '';
+	if(callbackTarget == 'ifttt') {
+		iftttEvent = body.iftttEvent;
+		iftttKey = body.iftttKey;
+	}
+	
+	// call API method to fetch details
+    let dailyEnergyDetailsStr = await api.fetchEndOfMonthData(ecuId, endDate, token);
+	let dailyEnergyDetails = JSON.parse(dailyEnergyDetailsStr);
+
+	let times = JSON.parse(dailyEnergyDetails.data.time);
+	let energy = JSON.parse(dailyEnergyDetails.data.energy);
+	
+	if(period == 'week') {
+		// select last 7 items
+		times = times.slice(-7);
+		energy = energy.slice(-7);		
+	}
+	
+	let httpTable = util.dataProcessorOutputHTMLTableForSummary(times, energy);
+	
+	let weeklySum = energy.map((value, index, array) => parseInt(value, 10)).reduce((total, amount) => total + amount);
+		
+	// post response to webhook
+	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
+	if(callbackTarget && iftttEvent && iftttKey) {
+		let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
+		let webhookBody = {
+			value1: endDate,
+			value2: weeklySum,
+			value3: httpTable
+		};
+		postSummary(webhookUrl, webhookBody);
+	}
+	
+	res.send(httpTable);
+});
+
+
 async function handleDailyEnergyDetails(ecuId, date, token) {
 	// call API method to fetch details
     let dailyEnergyDetails = await api.getDailyEnergyDetails(ecuId, date, token);
@@ -79,12 +137,15 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 }
 
 function preprocessDate(date) {
+	let before = date;
 	if(date == 'today') {
 		date = dateUtil.getToday();
 	}
 	else if(date == 'yesterday') {
 		date = dateUtil.getYesterday();
 	}
+	
+	console.log(`Before: ${before}, after: ${date}`);
 	
 	return date;
 }
