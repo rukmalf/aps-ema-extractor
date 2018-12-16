@@ -178,13 +178,13 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
 	console.log('Daily power: ' + dailyPower);
 	
-	let dailyEnergyDetails = {
+	let dailyEnergyDetailsResponse = {
 		csv: dailyEnergyDetailsCSV,
 		html: dailyEnergyDetailsHTML,
 		total: dailyPower
 	};
 	
-	return dailyEnergyDetails;
+	return dailyEnergyDetailsResponse;
 }
 
 function preprocessDate(date) {
