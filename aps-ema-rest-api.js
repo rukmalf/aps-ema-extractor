@@ -32,9 +32,10 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token', async (req, res) => {
 	
 	date = preprocessDate(date);
 	
-	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetailsHtml = dailyEnergyDetails.html;
 	
-	res.send(dailyEnergyDetailsCSV);
+	res.send(dailyEnergyDetailsHtml);
 });
 
 // 03.b - daily energy details with callback to IFTTT
@@ -48,7 +49,8 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	
 	date = preprocessDate(date);
 	
-	let dailyEnergyDetailsCSV = await handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetailsHtml = dailyEnergyDetails.html;
 	
 	//let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
 	//console.log('Daily power: ' + dailyPower);
@@ -60,12 +62,49 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	let webhookBody = {
 		value1: date,
 		value2: 42,
-		value3: dailyEnergyDetailsCSV
+		value3: dailyEnergyDetailsHtml
 	};
 
 	postSummary(webhookUrl, webhookBody);
 	
-	res.send(dailyEnergyDetailsCSV);
+	res.send(dailyEnergyDetailsHtml);
+});
+
+// 03.c - daily energy details, with callback to IFTTT in request body
+// Endpoint: service.get('/v1/ecu/:ecuId/daily-details/:date')
+service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
+	let ecuId = req.params.ecuId;
+	let date = req.params.date;
+	date = preprocessDate(date);
+	
+	// read token from body
+	let body = req.body;
+	let token = body.token;
+	
+	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
+	let dailyEnergyDetailsHTML = dailyEnergyDetails.html;
+	
+	// read callback info from body	
+	let callbackTarget = body.callback;
+	let iftttEvent = '';
+	let iftttKey = '';
+	if(callbackTarget == 'ifttt') {
+		iftttEvent = body.iftttEvent;
+		iftttKey = body.iftttKey;
+		
+		// post response to IFTTT webhook
+		// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
+		let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
+		let webhookBody = {
+			value1: date,
+			value2: dailyEnergyDetails.total,
+			value3: dailyEnergyDetailsHTML
+		};
+		
+		postSummary(webhookUrl, webhookBody);
+	}	
+	
+	res.send(dailyEnergyDetailsHTML);
 });
 
 // 04 - weekly/month energy details with callback to IFTTT
@@ -75,6 +114,10 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	let ecuId = req.params.ecuId;
 	let period = req.params.period;
 	let endDate = req.params.endDate;
+	
+	if(!(period == 'week' || period == 'month')) {
+		// TODO: return 404
+	}
 	
 	endDate = preprocessDate(endDate);
 	
@@ -105,7 +148,8 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	
 	let httpTable = util.dataProcessorOutputHTMLTableForSummary(times, energy);
 	
-	let weeklySum = energy.map((value, index, array) => parseInt(value, 10)).reduce((total, amount) => total + amount);
+	// parse values as decimal and sum them for the period's sum
+	let periodSum = energy.map((value, index, array) => parseInt(value, 10)).reduce((total, amount) => total + amount);
 		
 	// post response to webhook
 	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
@@ -113,7 +157,7 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 		let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
 		let webhookBody = {
 			value1: endDate,
-			value2: weeklySum,
+			value2: periodSum,
 			value3: httpTable
 		};
 		postSummary(webhookUrl, webhookBody);
@@ -128,12 +172,19 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
     let dailyEnergyDetails = await api.getDailyEnergyDetails(ecuId, date, token);
 	
 	// convert JSON data to CSV format so that we can easily plot with a spreadsheet
-	let dailyEnergyDetailsCSV = util.dataProcessorOutputHTMLTable(dailyEnergyDetails.data);
+	let dailyEnergyDetailsCSV = util.dataProcessorOutputCSV(dailyEnergyDetails.data);
+	let dailyEnergyDetailsHTML = util.dataProcessorOutputHTMLTable(dailyEnergyDetails.data);
 	
 	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
 	console.log('Daily power: ' + dailyPower);
 	
-	return dailyEnergyDetailsCSV;
+	let dailyEnergyDetails = {
+		csv: dailyEnergyDetailsCSV,
+		html: dailyEnergyDetailsHTML,
+		total: dailyPower
+	};
+	
+	return dailyEnergyDetails;
 }
 
 function preprocessDate(date) {
