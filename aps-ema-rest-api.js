@@ -56,7 +56,8 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	//console.log('Daily power: ' + dailyPower);
 	
 	// post response to webhook
-	// let webhookUrl = 'https://ift.tt/' + webhook;
+	postToIfttt(webhook, iftttKey, `Daily Summary - ${date}`, 42, dailyEnergyDetailsHTML);
+	/*// let webhookUrl = 'https://ift.tt/' + webhook;
 	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
 	let webhookUrl = `https://maker.ifttt.com/trigger/${webhook}/with/key/${iftttKey}`;
 	let webhookBody = {
@@ -66,6 +67,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	};
 
 	postSummary(webhookUrl, webhookBody);
+	*/
 	
 	res.send(dailyEnergyDetailsHtml);
 });
@@ -86,22 +88,14 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	
 	// read callback info from body	
 	let callbackTarget = body.callback;
-	let iftttEvent = '';
-	let iftttKey = '';
 	if(callbackTarget == 'ifttt') {
-		iftttEvent = body.iftttEvent;
-		iftttKey = body.iftttKey;
+		let iftttEvent = body.iftttEvent;
+		let iftttKey = body.iftttKey;
 		
 		// post response to IFTTT webhook
-		// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
-		let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
-		let webhookBody = {
-			value1: date,
-			value2: dailyEnergyDetails.total,
-			value3: dailyEnergyDetailsHTML
-		};
-		
-		postSummary(webhookUrl, webhookBody);
+		if(iftttEvent && iftttKey) {
+			postToIfttt(iftttEvent, iftttKey, `Daily Summary - ${date}`, dailyEnergyDetails.total, dailyEnergyDetailsHTML);
+		}
 	}	
 	
 	res.send(dailyEnergyDetailsHTML);
@@ -124,14 +118,6 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	// read token and callback info from body
 	let body = req.body;
 	let token = body.token;
-	let callbackTarget = body.callback;
-	
-	let iftttEvent = '';
-	let iftttKey = '';
-	if(callbackTarget == 'ifttt') {
-		iftttEvent = body.iftttEvent;
-		iftttKey = body.iftttKey;
-	}
 	
 	// call API method to fetch details
     let dailyEnergyDetailsStr = await api.fetchEndOfMonthData(ecuId, endDate, token);
@@ -140,10 +126,12 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	let times = JSON.parse(dailyEnergyDetails.data.time);
 	let energy = JSON.parse(dailyEnergyDetails.data.energy);
 	
+	let periodDesc = 'Monthly summary';
 	if(period == 'week') {
 		// select last 7 items
 		times = times.slice(-7);
-		energy = energy.slice(-7);		
+		energy = energy.slice(-7);
+		periodDesc = 'Weekly summary';
 	}
 	
 	let httpTable = util.dataProcessorOutputHTMLTableForSummary(times, energy);
@@ -152,15 +140,15 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	let periodSum = energy.map((value, index, array) => parseInt(value, 10)).reduce((total, amount) => total + amount);
 		
 	// post response to webhook
-	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
-	if(callbackTarget && iftttEvent && iftttKey) {
-		let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
-		let webhookBody = {
-			value1: endDate,
-			value2: periodSum,
-			value3: httpTable
-		};
-		postSummary(webhookUrl, webhookBody);
+	let callbackTarget = body.callback;
+	
+	if(callbackTarget == 'ifttt') {
+		let iftttEvent = body.iftttEvent;
+		let iftttKey = body.iftttKey;
+
+		if(callbackTarget && iftttEvent && iftttKey) {
+			postToIfttt(iftttEvent, iftttKey, `${periodDesc} - ${endDate}`, periodSum, httpTable);
+		}		
 	}
 	
 	res.send(httpTable);
@@ -199,6 +187,18 @@ function preprocessDate(date) {
 	console.log(`Before: ${before}, after: ${date}`);
 	
 	return date;
+}
+
+function postToIfttt(iftttEvent, iftttKey, ingredient1, ingredient2, ingredient3) {
+	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
+	let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
+	logger.logVerbose(`IFTTT: ${webhookUrl}`);
+	let webhookBody = {
+		value1: ingredient1,
+		value2: ingredient2,
+		value3: ingredient3
+	};
+	postSummary(webhookUrl, webhookBody);
 }
 
 function postSummary(callbackUrl, callbackBody) {
