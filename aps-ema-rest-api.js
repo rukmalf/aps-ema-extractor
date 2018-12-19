@@ -57,17 +57,6 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	
 	// post response to webhook
 	postToIfttt(webhook, iftttKey, `Daily Summary - ${date}`, 42, dailyEnergyDetailsHTML);
-	/*// let webhookUrl = 'https://ift.tt/' + webhook;
-	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
-	let webhookUrl = `https://maker.ifttt.com/trigger/${webhook}/with/key/${iftttKey}`;
-	let webhookBody = {
-		value1: date,
-		value2: 42,
-		value3: dailyEnergyDetailsHtml
-	};
-
-	postSummary(webhookUrl, webhookBody);
-	*/
 	
 	res.send(dailyEnergyDetailsHtml);
 });
@@ -192,7 +181,7 @@ function preprocessDate(date) {
 function postToIfttt(iftttEvent, iftttKey, ingredient1, ingredient2, ingredient3) {
 	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
 	let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
-	logger.logVerbose(`IFTTT: ${webhookUrl}`);
+	console.log(`IFTTT: ${webhookUrl}`);
 	let webhookBody = {
 		value1: ingredient1,
 		value2: ingredient2,
