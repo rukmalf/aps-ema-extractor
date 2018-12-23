@@ -75,7 +75,7 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHTML = dailyEnergyDetails.html;
-	console.log(`callback: ${callbackTarget}`);
+	console.log(`HTML content ready.`);
 	
 	// read callback info from body	
 	let callbackTarget = body.callback;
