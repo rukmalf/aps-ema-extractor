@@ -67,6 +67,7 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	let ecuId = req.params.ecuId;
 	let date = req.params.date;
 	date = preprocessDate(date);
+	console.log(`handling daily-details. ECU: ${ecuId}, Date: ${date}`);
 	
 	// read token from body
 	let body = req.body;
@@ -74,12 +75,16 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHTML = dailyEnergyDetails.html;
+	console.log(`callback: ${callbackTarget}`);
 	
 	// read callback info from body	
 	let callbackTarget = body.callback;
+	console.log(`callback: ${callbackTarget}`);
 	if(callbackTarget == 'ifttt') {
 		let iftttEvent = body.iftttEvent;
 		let iftttKey = body.iftttKey;
+		
+		console.log(`IFTTT event: ${iftttEvent}, Key: ${iftttKey}`);
 		
 		// post response to IFTTT webhook
 		if(iftttEvent && iftttKey) {
