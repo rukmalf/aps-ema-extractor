@@ -16,6 +16,10 @@ if(config.has('logLevel')) {
 	logger.init(logLevel);
 }
 
+// TODO: remove after testing
+logger.init(2); // init as verbose
+// END TODO
+
 // 01 - access token
 // TODO: service.get('/v1/AccessToken/app/:appId');
 
@@ -186,7 +190,7 @@ function preprocessDate(date) {
 function postToIfttt(iftttEvent, iftttKey, ingredient1, ingredient2, ingredient3) {
 	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
 	let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
-	console.log(`IFTTT: ${webhookUrl}`);
+	console.log(`IFTTT: ${webhookUrl}, value1: ${ingredient1}, value2: ${ingredient2}`);
 	let webhookBody = {
 		value1: ingredient1,
 		value2: ingredient2,
