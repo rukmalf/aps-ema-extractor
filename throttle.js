@@ -20,6 +20,16 @@ if(config.has('throttle-duration')) {
 	throttleDuration = config.get('throttle-duration');
 }
 
+// exclusion list is loaded from config, or if provided, overridden by Heroku config var
+if(config.has("none-throttled-ecus")) {
+	excluded = JSON.parse(config.get("none-throttled-ecus"));
+}
+if(process.env.NONE_THROTTLED_ECUS) {
+	let noneThrottledEcus = JSON.parse(process.env.NONE_THROTTLED_ECUS);
+	if(noneThrottledEcus)
+		excluded = noneThrottledEcus;
+}
+
 // test mode
 if(process.argv.length > 0) {	
 	if(process.argv[2] == 'test') {
@@ -87,6 +97,10 @@ async function runTests() {
 	throttleDuration = 5000; // set to 5 seconds for test
 	let testEcuId = "___TEST_ECU_ID___";
 	
+	let excludedEcuId = "___EXCLUDED_ECU_ID___";
+	let excludedDefault = excluded;
+	excluded = ['foo', excludedEcuId, 'bar'];
+	
 	let testCount = 0;
 	let testPassCount = 0;
 	
@@ -112,6 +126,14 @@ async function runTests() {
 	result = await assertCanQuery(testEcuId, true, "3 - third call after throttle duration");
 	testCount++; if(result) testPassCount++;
 	
+	// test 4 - repeat above with excluded ECU ID, all should return true
+	result = await assertCanQuery(excludedEcuId, true, "4.1 - first call with excluded ECU ID");
+	await pause(6000);
+	result = result && (await assertCanQuery(excludedEcuId, true, "4.2 - second call after throttle duration"));
+	await pause(1000);
+	result = result && (await assertCanQuery(excludedEcuId, true, "4.3 - third call within throttle duration"));
+	testCount++; if(result) testPassCount++; 
+	
 	// clear DB
 	console.log("Teardown: clearing DB...");
 	db.remove( {ecuId: testEcuId }, { multi: true }, function(err, numRemoved) { console.log(`${numRemoved} records removed. err = ${err}`); });
@@ -120,8 +142,9 @@ async function runTests() {
 	
 	console.log(`${testCount} tests run, ${testPassCount} passed.`);
 	
-	// reset previous duration
+	// reset previous state
 	throttleDuration = throttleDurationDefault;
+	excluded = excludedDefault;
 }
 
 async function assertCanQuery(ecuId, expected, description) {
