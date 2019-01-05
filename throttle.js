@@ -22,13 +22,22 @@ if(config.has('throttle-duration')) {
 
 // exclusion list is loaded from config, or if provided, overridden by Heroku config var
 if(config.has("none-throttled-ecus")) {
+	logger.logVerbose('Overriding throttle exclude list from config');
 	excluded = JSON.parse(config.get("none-throttled-ecus"));
 }
+
 if(process.env.NONE_THROTTLED_ECUS) {
+	logger.logVerbose(`process.env.NONE_THROTTLED_ECUS = "${process.env.NONE_THROTTLED_ECUS}"`);
 	let noneThrottledEcus = JSON.parse(process.env.NONE_THROTTLED_ECUS);
-	if(noneThrottledEcus)
+	if(noneThrottledEcus) {
+		logger.logVerbose('Overriding throttle exclude list from ENV');
 		excluded = noneThrottledEcus;
+	}
 }
+
+// log the ECU ID's we will exclude from throttling
+logger.logVerbose(`${excluded.length} ECU ID(s) will be excluded from throttling.`);
+excluded.map(value => logger.logVerbose(`  excluded ECU ID: ${value}.`));
 
 // test mode
 if(process.argv.length > 0) {	
@@ -62,7 +71,7 @@ function checkThrottling(targetEcuId) {
 				// no record found, so note this and return true
 				// finally, note this request with timestamp
 				let record = { ecuId: targetEcuId, lastAccess: new Date()};
-				logger.logVerbose(`db.insert with ${record.lastAccess}`);
+				logger.logVerbose(`db.insert with ${record.lastAccess} for ${targetEcuId}`);
 				db.insert(record);
 				
 				resolve(true);
@@ -71,13 +80,14 @@ function checkThrottling(targetEcuId) {
 				// ideally it should be one object, but we'll take the first anyway
 				let record = docs[0];
 				let msSinceLastAccess = new Date().getTime() - record.lastAccess.getTime();
+				let allowed = (msSinceLastAccess > throttleDuration);
 
-				logger.logVerbose(`${msSinceLastAccess} ms since last access`);
-				if(msSinceLastAccess > throttleDuration) {
+				logger.logVerbose(`${msSinceLastAccess} ms since last access for ${targetEcuId}, returning ${allowed}`);
+				if(allowed) {
 					// throttle duration has passed since last call for this ECU, update DB with current timestamp and proceed
 					record.lastAccess = new Date();
 					logger.logVerbose(`db.update with ${record.lastAccess}`);
-					db.update( {ecuId: targetEcuId }, record, {}, function(err, numReplaced) { console.log(`${numReplaced} instances updated for ${targetEcuId}.`); });
+					db.update( {ecuId: targetEcuId }, record, {}, function(err, numReplaced) { logger.logVerbose(`${numReplaced} instances updated for ${targetEcuId}.`); });
 
 					resolve(true);
 				}
