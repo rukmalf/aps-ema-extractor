@@ -7,6 +7,7 @@ const api = require('./aps-ema-extractor-service');
 const util = require('./util');
 const dateUtil = require('./date-util');
 const logger = require('./logger');
+const throttle = require('./throttle');
 
 service.use(bodyParser.json());
 
@@ -26,6 +27,13 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token', async (req, res) => {
 	
 	date = preprocessDate(date);
 	
+	// check API throttling
+	let result = await throttle.canQuery(ecuId);
+	if(!result) {
+		res.send('This API is throttled. Please wait longer between successive calls using a given ECU ID.', 429, {});
+		return;
+	}
+	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHtml = dailyEnergyDetails.html;
 	
@@ -42,6 +50,13 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	let iftttKey = req.params.iftttkey;
 	
 	date = preprocessDate(date);
+	
+	// check API throttling
+	let result = await throttle.canQuery(ecuId);
+	if(!result) {
+		res.send('This API is throttled. Please wait longer between successive calls using a given ECU ID.', 429, {});
+		return;
+	}
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHtml = dailyEnergyDetails.html;
@@ -62,6 +77,13 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	let date = req.params.date;
 	date = preprocessDate(date);
 	console.log(`handling daily-details. ECU: ${ecuId}, Date: ${date}`);
+	
+	// check API throttling
+	let result = await throttle.canQuery(ecuId);
+	if(!result) {
+		res.send('This API is throttled. Please wait longer between successive calls using a given ECU ID.', 429, {});
+		return;
+	}
 	
 	// read token and callback info from body
 	let body = req.body;
@@ -102,6 +124,13 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	}
 	
 	endDate = preprocessDate(endDate);
+	
+	// check API throttling
+	let result = await throttle.canQuery(ecuId);
+	if(!result) {
+		res.send('This API is throttled. Please wait longer between successive calls using a given ECU ID.', 429, {});
+		return;
+	}
 	
 	// read token and callback info from body
 	let body = req.body;
