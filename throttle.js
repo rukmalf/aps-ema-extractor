@@ -72,18 +72,17 @@ function checkThrottling(targetEcuId) {
 				let record = docs[0];
 				let msSinceLastAccess = new Date().getTime() - record.lastAccess.getTime();
 
-				// update DB with latest timestamp
-				record.lastAccess = new Date();
-				logger.logVerbose(`db.update with ${record.lastAccess}`);
-				db.update( {ecuId: targetEcuId }, record, {}, function(err, numReplaced) { console.log(`${numReplaced} instances updated for ${targetEcuId}.`); });
-
 				logger.logVerbose(`${msSinceLastAccess} ms since last access`);
 				if(msSinceLastAccess > throttleDuration) {
-					// throttle duration has passed since last call for this ECU, can proceed					
+					// throttle duration has passed since last call for this ECU, update DB with current timestamp and proceed
+					record.lastAccess = new Date();
+					logger.logVerbose(`db.update with ${record.lastAccess}`);
+					db.update( {ecuId: targetEcuId }, record, {}, function(err, numReplaced) { console.log(`${numReplaced} instances updated for ${targetEcuId}.`); });
+
 					resolve(true);
 				}
 				else {
-					// still in throttle period for this ECU, can not proceed					
+					// still in throttle period for this ECU, can not proceed. Timestamp should not be updated.
 					resolve(false);
 				}
 			}
@@ -126,12 +125,21 @@ async function runTests() {
 	result = await assertCanQuery(testEcuId, true, "3 - third call after throttle duration");
 	testCount++; if(result) testPassCount++;
 	
-	// test 4 - repeat above with excluded ECU ID, all should return true
-	result = await assertCanQuery(excludedEcuId, true, "4.1 - first call with excluded ECU ID");
+	// test 4 - wait 6s (more than throttle duration) make one call (should succeed), wait 3s and make call (should fail), wait 3s more and make third call (should succeed).
 	await pause(6000);
-	result = result && (await assertCanQuery(excludedEcuId, true, "4.2 - second call after throttle duration"));
+	result = await assertCanQuery(testEcuId, true, "4.1 - first call - should succeed");
+	await pause(3000);
+	result = result && (await assertCanQuery(testEcuId, false, "4.2 - second call within throttle duration, should fail"));
+	await pause(3000);
+	result = result && (await assertCanQuery(testEcuId, true, "4.3 - third call just after throttle duration, should succeed"));
+	testCount++; if(result) testPassCount++; 
+	
+	// test 5 - repeat above with excluded ECU ID, all should return true
+	result = await assertCanQuery(excludedEcuId, true, "5.1 - first call with excluded ECU ID");
+	await pause(6000);
+	result = result && (await assertCanQuery(excludedEcuId, true, "5.2 - second call after throttle duration"));
 	await pause(1000);
-	result = result && (await assertCanQuery(excludedEcuId, true, "4.3 - third call within throttle duration"));
+	result = result && (await assertCanQuery(excludedEcuId, true, "5.3 - third call within throttle duration"));
 	testCount++; if(result) testPassCount++; 
 	
 	// clear DB
