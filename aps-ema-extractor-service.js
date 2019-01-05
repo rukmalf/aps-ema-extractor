@@ -1,5 +1,4 @@
 var request = require('request');
-var config = require('config');
 var dateutil = require('./date-util');
 var logger = require('./logger');
 
@@ -7,11 +6,6 @@ var logger = require('./logger');
 const API_URL = 'http://api.apsystemsema.com:8073/apsema/v1';
 //const API_URL = 'http://demo1881045.mockable.io';
 const options = { headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 60000 };
-
-if(config.has('logLevel')) {
-	logLevel = config.get('logLevel');
-	logger.init(logLevel);
-}
 
 function postSync(url, headers) {
 	return new Promise((resolve, reject) => {

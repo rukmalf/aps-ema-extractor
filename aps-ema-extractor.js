@@ -26,11 +26,6 @@ if(config.has('runTests')) {
 	}
 }
 
-if(config.has('logLevel')) {
-	logLevel = config.get('logLevel');
-	logger.init(logLevel);
-}
-
 if(config.has('username')) {
   username = config.get('username');
   logger.logVerbose('Found username: ' + username);

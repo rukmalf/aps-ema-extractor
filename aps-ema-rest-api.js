@@ -10,16 +10,6 @@ const logger = require('./logger');
 
 service.use(bodyParser.json());
 
-let logLevel = logger.logError;
-if(config.has('logLevel')) {
-	logLevel = config.get('logLevel');
-	logger.init(logLevel);
-}
-
-// TODO: remove after testing
-logger.init(2); // init as verbose
-// END TODO
-
 // 01 - access token
 // TODO: service.get('/v1/AccessToken/app/:appId');
 
