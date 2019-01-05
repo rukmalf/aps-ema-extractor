@@ -73,16 +73,16 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	date = preprocessDate(date);
 	console.log(`handling daily-details. ECU: ${ecuId}, Date: ${date}`);
 	
-	// read token from body
+	// read token and callback info from body
 	let body = req.body;
-	let token = body.token;
+	let token = body.token;	
+	let callbackTarget = body.callback;
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHTML = dailyEnergyDetails.html;
 	console.log(`HTML content ready.`);
 	
-	// read callback info from body	
-	let callbackTarget = body.callback;
+	// if callback is present, send the result
 	console.log(`callback: ${callbackTarget}`);
 	if(callbackTarget == 'ifttt') {
 		let iftttEvent = body.iftttEvent;
