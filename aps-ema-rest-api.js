@@ -60,10 +60,7 @@ service.get('/v1/ecu/:ecuId/daily-details/:date/:token/ifttt/:webhook/:iftttkey'
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHtml = dailyEnergyDetails.html;
-	
-	//let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
-	//console.log('Daily power: ' + dailyPower);
-	
+		
 	// post response to webhook
 	postToIfttt(webhook, iftttKey, `Daily Summary - ${date}`, 42, dailyEnergyDetailsHTML);
 	
@@ -76,7 +73,7 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	let ecuId = req.params.ecuId;
 	let date = req.params.date;
 	date = preprocessDate(date);
-	console.log(`handling daily-details. ECU: ${ecuId}, Date: ${date}`);
+	logger.logVerbose(`handling daily-details. ECU: ${ecuId}, Date: ${date}`);
 	
 	// check API throttling
 	let result = await throttle.canQuery(ecuId);
@@ -92,15 +89,15 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	
 	let dailyEnergyDetails = await handleDailyEnergyDetails(ecuId, date, token);
 	let dailyEnergyDetailsHTML = dailyEnergyDetails.html;
-	console.log(`HTML content ready.`);
+	logger.logVerbose(`HTML content ready.`);
 	
 	// if callback is present, send the result
-	console.log(`callback: ${callbackTarget}`);
+	logger.logVerbose(`callback: ${callbackTarget}`);
 	if(callbackTarget == 'ifttt') {
 		let iftttEvent = body.iftttEvent;
 		let iftttKey = body.iftttKey;
 		
-		console.log(`IFTTT event: ${iftttEvent}, Key: ${iftttKey}`);
+		logger.logVerbose(`IFTTT event: ${iftttEvent}, Key: ${iftttKey}`);
 		
 		// post response to IFTTT webhook
 		if(iftttEvent && iftttKey) {
@@ -120,7 +117,8 @@ service.post('/v1/ecu/:ecuId/summary/:period/:endDate', async (req, res) => {
 	let endDate = req.params.endDate;
 	
 	if(!(period == 'week' || period == 'month')) {
-		// TODO: return 404
+		res.send(`"${period}" for :period is not supported. Retry with "week" or "month" instead.`, 404, {});
+		return
 	}
 	
 	endDate = preprocessDate(endDate);
@@ -181,7 +179,7 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 	let dailyEnergyDetailsHTML = util.dataProcessorOutputHTMLTable(dailyEnergyDetails.data);
 	
 	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
-	console.log('Daily power: ' + dailyPower);
+	logger.logVerbose('Daily power: ' + dailyPower);
 	
 	let dailyEnergyDetailsResponse = {
 		csv: dailyEnergyDetailsCSV,
@@ -201,15 +199,14 @@ function preprocessDate(date) {
 		date = dateUtil.getYesterday();
 	}
 	
-	console.log(`Before: ${before}, after: ${date}`);
+	logger.logVerbose(`preprocessDate: before = ${before}, after = ${date}`);
 	
 	return date;
 }
 
 function postToIfttt(iftttEvent, iftttKey, ingredient1, ingredient2, ingredient3) {
-	// https://maker.ifttt.com/trigger/solarpv_energy_report_available/with/key/fhYjVh5smIXZ103Edn7LKq5rmTwncNZJVvLGWPxfMI5
 	let webhookUrl = `https://maker.ifttt.com/trigger/${iftttEvent}/with/key/${iftttKey}`;
-	console.log(`IFTTT: ${webhookUrl}, value1: ${ingredient1}, value2: ${ingredient2}`);
+	logger.logVerbose(`IFTTT: ${webhookUrl}, value1: ${ingredient1}, value2: ${ingredient2}`);
 	let webhookBody = {
 		value1: ingredient1,
 		value2: ingredient2,
@@ -233,9 +230,7 @@ function postSummary(callbackUrl, callbackBody) {
 				}
 			}
 		);
-	}
-	
-	
+	}	
 }
 
 var port = process.env.PORT || 8080;

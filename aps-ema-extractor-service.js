@@ -13,15 +13,15 @@ function postSync(url, headers) {
 		
 		request.post(url, headers, (error, response, body) => {
 			if(error) {
-				console.log('Rejecting promise due to error: ' + error);
+				logger.logError('Rejecting promise due to error: ' + error);
 				reject(error);
 			}
 			if(response.statusCode != 200) {
-				console.log('Rejecting promise due to invalid status code: ' + response.statusCode);
+				logger.logError('Rejecting promise due to invalid status code: ' + response.statusCode);
 				reject('Invalid status code <' + response.statusCode + '>');
 			}
 			
-			console.log('<== ' + body);
+			logger.logVerbose('<== ' + body);
 			resolve(body);
 		});
 	});
@@ -34,7 +34,7 @@ async function getAccessToken() {
 	let accessTokenResponse = await postSync(accessTokenUrl, options);
 	
 	let access_token = JSON.parse(accessTokenResponse).access_token;
-	console.log('Access token: ' + access_token);
+	logger.logVerbose('Access token: ' + access_token);
 	
 	return access_token;
 }
@@ -47,9 +47,9 @@ async function getUserDetails(username, password, accessToken) {
 	var authenticateDetails = JSON.parse(authenticateResponse);
 	var data = JSON.parse(authenticateDetails.data);
 	userId = data.userId;
-	console.log('User ID: ' + userId);
+	logger.logVerbose('User ID: ' + userId);
 	var ecuId = JSON.parse(data.ecuId)[userId];
-	console.log('ECU ID: ' + ecuId);
+	logger.logVerbose('ECU ID: ' + ecuId);
 	
 	var userDetails = {};
 	userDetails.userId = userId;

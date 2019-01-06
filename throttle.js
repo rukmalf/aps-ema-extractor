@@ -9,23 +9,27 @@ var logger = require('./logger');
 // read exlcusion list from config and cache locally
 let excluded = [];
 
-let throttleDuration = 3600000; // default throttle duration is at least one hour between successive calls for the same ECU ID
+let throttleDuration = 3480000; // default throttle duration is at least 58 minutes between successive calls for the same ECU ID
 
-// allow exclusion list and throttle duration to be overridden in config
-if(config.has('no-throttle')) {
-	excluded = config.get('no-throttle');
-}
-
+// throttle duration can be overridden in either config or Heroku config var
 if(config.has('throttle-duration')) {
 	throttleDuration = config.get('throttle-duration');
 }
+if(process.env.THROTTLE_DURATION) {
+	logger.logVerbose(`process.env.THROTTLE_DURATION = "${process.env.THROTTLE_DURATION}"`);
+	let throttleDurationOverride = parseInt(process.env.THROTTLE_DURATION);
+	if(throttleDurationOverride > 0) {
+		logger.logVerbose('Overriding throttle duration from ENV');
+		throttleDuration = throttleDurationOverride;
+	}
+}
+logger.logVerbose(`Throttle duration: ${throttleDuration} ms.`);
 
 // exclusion list is loaded from config, or if provided, overridden by Heroku config var
 if(config.has("none-throttled-ecus")) {
 	logger.logVerbose('Overriding throttle exclude list from config');
 	excluded = JSON.parse(config.get("none-throttled-ecus"));
 }
-
 if(process.env.NONE_THROTTLED_ECUS) {
 	logger.logVerbose(`process.env.NONE_THROTTLED_ECUS = "${process.env.NONE_THROTTLED_ECUS}"`);
 	let noneThrottledEcus = JSON.parse(process.env.NONE_THROTTLED_ECUS);

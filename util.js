@@ -57,8 +57,8 @@ function dataProcessorOutputHTMLTable(data, fnOutput) {
 	}
 	output = output + '</table>';
 	
-	console.log('HTML');
-	console.log(output);
+	logger.logVerbose('HTML');
+	logger.logVerbose(output);
 	
 	return output; 
 }
@@ -91,7 +91,7 @@ function dataProcessorOutputCSVFile(data) {
 	
 	fs.writeFile(filename, content, function(err) {
 		if(err) {
-			console.log(err);
+			logger.logError(err);
 		}
 
 		logger.logVerbose(readingCount + ' entries written to ' + filename);
