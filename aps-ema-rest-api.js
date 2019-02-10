@@ -96,11 +96,17 @@ service.post('/v1/ecu/:ecuId/daily-details/:date', async (req, res) => {
 	if(callbackTarget == 'ifttt') {
 		let iftttEvent = body.iftttEvent;
 		let iftttKey = body.iftttKey;
+		let iftttErrorEvent = body.iftttErrorEvent;
 		
-		logger.logVerbose(`IFTTT event: ${iftttEvent}, Key: ${iftttKey}`);
+		logger.logVerbose(`IFTTT event: ${iftttEvent}, Key: ${iftttKey}, IFTTT error event: ${iftttErrorEvent}`);
 		
 		// post response to IFTTT webhook
 		if(iftttEvent && iftttKey) {
+			// if we have any error info, post that separately
+			if(dailyEnergyDetails.errorInfo)
+				postToIfttt(iftttErrorEvent, iftttKey, `${dailyEnergyDetails.errorInfo}`, `${date}`, '');
+			
+			// post whatever response we have too
 			postToIfttt(iftttEvent, iftttKey, `Daily Summary - ${date}`, dailyEnergyDetails.total, dailyEnergyDetailsHTML);
 		}
 	}	
@@ -181,10 +187,15 @@ async function handleDailyEnergyDetails(ecuId, date, token) {
 	let dailyPower = util.dataProcessorOutputDailyTotal(dailyEnergyDetails.data);
 	logger.logVerbose('Daily power: ' + dailyPower);
 	
+	let errorInfo = '';
+	if(dailyPower == -1 || dailyPower == 0)
+		errorInfo = 'No energy readings. System down?';
+	
 	let dailyEnergyDetailsResponse = {
 		csv: dailyEnergyDetailsCSV,
 		html: dailyEnergyDetailsHTML,
-		total: dailyPower
+		total: dailyPower,
+		errorInfo: errorInfo
 	};
 	
 	return dailyEnergyDetailsResponse;
