@@ -14,14 +14,17 @@ If you have a solar photovoltaic system (i.e.: solar panels) connected to an Ene
         {
             "username": "<your username on the APS EMA Portal",
             "password": "<your password on the APS EMA Portal>",
-            "logLevel": 2 # 0 = no logging, 1 = errors only, 2 = verbose logging
-            # below this are optional configuration options
-            # , "output": "csv"
-            # , "runTests": false # set to true to run unit tests
-            # , "overrideDate": "20210123" # default is to run for the system date.
-            # Set date in yyyymmdd format to fetch data for a specific date.
+            "logLevel": 2
             }
         ```
+        Here's more on the configuration options:
+        |Option|Meaning|
+        |---|---|
+        |logLevel|0 = no logging, 1 = errors only, 2 = verbose logging|
+        |output|Optional. Default is json output. "csv" results in a CSV output|
+        |runTests|Optional. Default is false. If set to true, runs unit tests in standalone mode|
+        |overrideDate|Optional. By default fetches the ECU data for the system date, but can be specified (in "yyyymmdd" format) to fetch ECU data for an arbitrary date.|
+
 ## Test:
 aps-ema-extractor has some simple built in unit tests that you can run to verify it's working as it should. Note that the unit tests *do not* connect to the backend API.
 Set `runTests` to `true` in `config/default.json` and run in standalone mode.
@@ -34,3 +37,4 @@ This connects to the APS EMA API using the username and password given in the co
 You can also fetch data for a specific date by setting it in "yyyymmdd" format in the `overrideDate` parameter in the config file.
 
 ## Deploy with IFTTT:
+<TODO>
