@@ -1,6 +1,10 @@
 {
   "name": "aps-ema-extractor",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rukmalf/aps-ema-extractor.git"
+  },
   "description": "Use APS EMA API to extract information about a Solar PV System",
   "main": "index.js",
   "scripts": {

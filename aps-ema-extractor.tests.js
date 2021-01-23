@@ -1,9 +1,11 @@
 var dateutil = require('./date-util');
 
+runTests();
+
 function runTests() {
 	console.log('Running tests...');
 	// getDateString() tests
-	
+
 	// isLastDayOfMonth() tests
 	console.log('Running isLastDayOfMonth() tests...');
 	assertIsLastDayOfMonth(new Date(2018, 0, 1, 0, 0, 0, 0), false);
