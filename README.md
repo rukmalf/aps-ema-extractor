@@ -1,4 +1,7 @@
 # aps-ema-extractor
+
+**IMPORTANT UPDATE 2021-09-11**: The APS EMA API no longer seems to be available so **THIS CODE WILL FAIL**. A new API is available, and this project will be updated once the new API is understood. **END UPDATE.**
+
 aps-ema-extractor is a simple client for the APS EMA API that allows Solar PV data to be extracted.
 If you have a solar photovoltaic system (i.e.: solar panels) connected to an Energy Communications Unit (ECU) by [Altenergy Power Systems (APS)](https://apsystems.com/), then you can login to APS's Energy Monitoring & Analysis (EMA) portal [https://apsystemsema.com/ema/index.action](https://apsystemsema.com/ema/index.action). If you have the credentials for this portal, you can use this client to fetch your data in CSV format, and to also have it run via [If This Then That (IFTTT)](https://ifttt.com/) on a schedule (daily, for example) and have the results e-mailed out to you so that you get a periodic CSV report by e-mail. When you run this via IFTTT, you can also get periodic summaries via e-mail, for example weekly or monthly.
 
